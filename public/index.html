@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 影像生成</title>
+    <title>AI 影像生成 Pro</title>
     <style>
         /* 蘋果風格設計系統 */
         :root {
@@ -13,16 +13,17 @@
             --text-secondary: #86868b;
             --accent-color: #0071e3;
             --accent-hover: #0077ed;
+            --border-color: #d2d2d7;
         }
 
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px 0;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
@@ -30,8 +31,9 @@
 
         .container {
             width: 100%;
-            max-width: 500px;
-            padding: 20px;
+            max-width: 800px;
+            padding: 0 20px;
+            box-sizing: border-box;
         }
 
         .card {
@@ -42,57 +44,102 @@
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
+            margin-bottom: 30px;
         }
 
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 8px;
-            text-align: center;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
-        p.subtitle {
-            text-align: center;
-            color: var(--text-secondary);
+        h1 { margin: 0; font-size: 24px; font-weight: 600; }
+        
+        .api-key-input {
+            width: 250px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
             font-size: 14px;
-            margin-bottom: 24px;
         }
 
-        input[type="password"], textarea {
+        .input-area {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        textarea {
             width: 100%;
             padding: 16px;
+            padding-right: 50px; /* 留空間給上傳按鈕 */
             border-radius: 12px;
-            border: 1px solid #d2d2d7;
-            background-color: #ffffff;
+            border: 1px solid var(--border-color);
             font-size: 16px;
             font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
             box-sizing: border-box;
-            transition: border-color 0.2s ease;
-            margin-bottom: 8px;
+            transition: border-color 0.2s;
         }
-        
-        textarea {
-            resize: none;
-            margin-bottom: 16px;
+        textarea:focus { outline: none; border-color: var(--accent-color); }
+
+        /* 圖片上傳按鈕 (目前僅為 UI 預留) */
+        .upload-btn {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+        .upload-btn:hover { color: var(--accent-color); }
+
+        /* 進階設定工具列 */
+        .settings-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        input[type="password"]:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 100px;
         }
 
-        .helper-text {
+        .setting-group label {
             font-size: 12px;
             color: var(--text-secondary);
-            margin-top: 0;
-            margin-bottom: 16px;
-            padding-left: 4px;
+            font-weight: 500;
         }
 
-        button {
+        select, input[type="number"] {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: white;
+            font-size: 14px;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        button.primary-btn {
             width: 100%;
             background-color: var(--accent-color);
             color: white;
@@ -102,38 +149,42 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.1s ease;
+            transition: all 0.2s ease;
+        }
+        button.primary-btn:hover { background-color: var(--accent-hover); }
+        button.primary-btn:disabled { background-color: var(--border-color); cursor: not-allowed; }
+
+        /* 畫廊 (歷史紀錄) */
+        h2 { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
         }
 
-        button:hover { background-color: var(--accent-hover); }
-        button:active { transform: scale(0.98); }
-        button:disabled { background-color: #d2d2d7; cursor: not-allowed; }
-
-        .image-preview {
-            margin-top: 24px;
-            width: 100%;
+        .gallery-item {
+            background: white;
             border-radius: 12px;
             overflow: hidden;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            background-color: #e5e5ea;
-            aspect-ratio: 1 / 1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            position: relative;
         }
 
-        .image-preview img {
+        .gallery-item img {
             width: 100%;
-            height: 100%;
+            aspect-ratio: 1/1;
             object-fit: cover;
             display: block;
         }
 
-        .loader {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
+        .gallery-item .meta {
+            padding: 12px;
+            font-size: 12px;
             color: var(--text-secondary);
-            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -141,78 +192,147 @@
 
 <div class="container">
     <div class="card">
-        <h1>創造影像</h1>
-        <p class="subtitle">輸入您的靈感，交給 AI 實現。</p>
-
-        <input type="password" id="apiKeyInput" placeholder="輸入 API 金鑰 (sk-...)" autocomplete="off">
-        <p class="helper-text">金鑰僅安全儲存於您的瀏覽器中。</p>
-
-        <textarea id="promptInput" rows="3" placeholder="例如：一隻在太空中的可愛貓咪，高畫質..."></textarea>
-        <button id="generateBtn">生成圖片</button>
-
-        <div class="loader" id="loader">✨ 正在構思畫面，請稍候...</div>
-
-        <div class="image-preview" id="imageContainer">
-            <img id="resultImage" src="" alt="生成的圖片">
+        <div class="header">
+            <h1>Playground</h1>
+            <input type="password" id="apiKeyInput" class="api-key-input" placeholder="輸入 API 金鑰 (sk-...)" autocomplete="off">
         </div>
+
+        <div class="input-area">
+            <textarea id="promptInput" placeholder="輸入高畫質影像的提示詞..."></textarea>
+            <button class="upload-btn" title="上傳參考圖 (開發中)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            </button>
+        </div>
+
+        <div class="settings-bar">
+            <div class="setting-group">
+                <label>尺寸 (Size)</label>
+                <select id="sizeSelect">
+                    <option value="auto">Auto</option>
+                    <option value="1024x1024">1:1 (1024x1024)</option>
+                    <option value="1024x1536">2:3 (1024x1536)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>格式 (Format)</label>
+                <select id="formatSelect">
+                    <option value="png">PNG</option>
+                    <option value="jpeg">JPEG</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>審核 (Moderation)</label>
+                <select id="modSelect">
+                    <option value="low">Low (寬鬆)</option>
+                    <option value="high">High (嚴格)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>數量 (Count)</label>
+                <input type="number" id="countInput" value="1" min="1" max="4">
+            </div>
+        </div>
+
+        <div class="toggle-container">
+            <input type="checkbox" id="strictPrompt" checked>
+            <label for="strictPrompt">強制使用原提示詞 (不讓模型自動改寫)</label>
+        </div>
+
+        <button id="generateBtn" class="primary-btn">生成圖片</button>
     </div>
+
+    <h2>生成紀錄</h2>
+    <div class="gallery" id="galleryContainer">
+        </div>
 </div>
 
 <script>
-    const generateBtn = document.getElementById('generateBtn');
-    const promptInput = document.getElementById('promptInput');
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const loader = document.getElementById('loader');
-    const imageContainer = document.getElementById('imageContainer');
-    const resultImage = document.getElementById('resultImage');
+    // DOM 元素
+    const elements = {
+        generateBtn: document.getElementById('generateBtn'),
+        promptInput: document.getElementById('promptInput'),
+        apiKeyInput: document.getElementById('apiKeyInput'),
+        sizeSelect: document.getElementById('sizeSelect'),
+        formatSelect: document.getElementById('formatSelect'),
+        modSelect: document.getElementById('modSelect'),
+        countInput: document.getElementById('countInput'),
+        strictPrompt: document.getElementById('strictPrompt'),
+        galleryContainer: document.getElementById('galleryContainer')
+    };
 
-    // 網頁載入時，自動讀取之前存過的 API Key
+    // 載入歷史紀錄與設定
     window.addEventListener('DOMContentLoaded', () => {
         const savedKey = localStorage.getItem('apple_image_api_key');
-        if (savedKey) {
-            apiKeyInput.value = savedKey;
-        }
+        if (savedKey) elements.apiKeyInput.value = savedKey;
+        renderGallery();
     });
 
-    generateBtn.addEventListener('click', async () => {
-        const prompt = promptInput.value.trim();
-        const apiKey = apiKeyInput.value.trim();
+    // 渲染畫廊
+    function renderGallery() {
+        const history = JSON.parse(localStorage.getItem('image_history') || '[]');
+        elements.galleryContainer.innerHTML = history.map(item => `
+            <div class="gallery-item">
+                <img src="${item.url}" alt="generated image">
+                <div class="meta" title="${item.prompt}">
+                    ${item.size} • ${item.format.toUpperCase()} <br>
+                    ${item.prompt}
+                </div>
+            </div>
+        `).join('');
+    }
 
-        if (!apiKey) return alert('請先輸入 API 金鑰！');
-        if (!prompt) return alert('請輸入提示詞！');
+    elements.generateBtn.addEventListener('click', async () => {
+        const payload = {
+            apiKey: elements.apiKeyInput.value.trim(),
+            prompt: elements.promptInput.value.trim(),
+            size: elements.sizeSelect.value,
+            format: elements.formatSelect.value,
+            moderation: elements.modSelect.value,
+            n: parseInt(elements.countInput.value) || 1,
+            strict: elements.strictPrompt.checked
+        };
 
-        // 將 API Key 存入瀏覽器，下次不用重填
-        localStorage.setItem('apple_image_api_key', apiKey);
+        if (!payload.apiKey || !payload.prompt) return alert('請填寫金鑰與提示詞！');
+        localStorage.setItem('apple_image_api_key', payload.apiKey);
 
-        generateBtn.disabled = true;
-        generateBtn.textContent = "生成中...";
-        loader.style.display = 'block';
-        imageContainer.style.display = 'none';
-        imageContainer.style.opacity = '0';
+        // UI 狀態：載入中
+        elements.generateBtn.disabled = true;
+        elements.generateBtn.textContent = "✨ 生成中...";
 
         try {
             const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // 將 prompt 和 apiKey 一起傳給後端
-                body: JSON.stringify({ prompt: prompt, apiKey: apiKey })
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
 
             if (data.error) {
                 alert('發生錯誤：' + data.error);
-            } else if (data.image) {
-                resultImage.src = data.image;
-                imageContainer.style.display = 'block';
-                setTimeout(() => { imageContainer.style.opacity = '1'; }, 50);
+            } else if (data.images && data.images.length > 0) {
+                // 將新圖片存入歷史紀錄
+                const history = JSON.parse(localStorage.getItem('image_history') || '[]');
+                
+                // 處理可能回傳的多張圖片
+                data.images.forEach(imgUrl => {
+                    history.unshift({
+                        url: imgUrl,
+                        prompt: payload.prompt,
+                        size: payload.size,
+                        format: payload.format
+                    });
+                });
+
+                // 最多保留 20 筆紀錄
+                localStorage.setItem('image_history', JSON.stringify(history.slice(0, 20)));
+                renderGallery(); // 重新整理畫廊
             }
         } catch (error) {
-            alert('連線失敗，請稍後再試。');
+            alert('連線失敗，請檢查網路或 Vercel 狀態。');
         } finally {
-            generateBtn.disabled = false;
-            generateBtn.textContent = "生成圖片";
-            loader.style.display = 'none';
+            elements.generateBtn.disabled = false;
+            elements.generateBtn.textContent = "生成圖片";
         }
     });
 </script>
