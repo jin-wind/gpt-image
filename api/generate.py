@@ -38,6 +38,7 @@ class handler(BaseHTTPRequestHandler):
             final_prompt = f"Use the following text as the complete prompt. Do not rewrite it:\n{user_prompt}"
         
         # 建構完整的自訂 Payload
+# 建構完整的自訂 Payload
         api_payload = {
             "model": "gpt-image-2",
             "prompt": final_prompt,
@@ -47,9 +48,11 @@ class handler(BaseHTTPRequestHandler):
             "n": n_count
         }
 
+        # 👇 就是這裡！加上 User-Agent 偽裝成 Chrome 瀏覽器
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
+            "Authorization": f"Bearer {api_key}",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         }
 
         request = urllib.request.Request(
@@ -58,7 +61,6 @@ class handler(BaseHTTPRequestHandler):
             headers=headers,
             method="POST"
         )
-
         try:
             with urllib.request.urlopen(request) as response:
                 response_data = json.loads(response.read().decode('utf-8'))
