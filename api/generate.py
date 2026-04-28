@@ -24,6 +24,7 @@ class handler(BaseHTTPRequestHandler):
         user_prompt = req_body.get('prompt', '')
         size = req_body.get('size', 'auto')
         output_format = req_body.get('format', 'png')
+        quality = req_body.get('quality', 'high')
         moderation = req_body.get('moderation', 'low')
         n_count = req_body.get('n', 1)
         is_strict = req_body.get('strict', True)
@@ -38,13 +39,13 @@ class handler(BaseHTTPRequestHandler):
             final_prompt = f"Use the following text as the complete prompt. Do not rewrite it:\n{user_prompt}"
         
         # 建構完整的自訂 Payload
-# 建構完整的自訂 Payload
         api_payload = {
             "model": "gpt-image-2",
             "prompt": final_prompt,
             "size": size,
             "output_format": output_format,
             "moderation": moderation,
+            "quality": quality,
             "n": n_count
         }
 
