@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 影像生成 Pro</title>
     <style>
-        /* 蘋果風格設計系統 */
+        /* 蘋果風格設計系統 + 專業暗色系卡片 */
         :root {
             --bg-color: #f5f5f7;
             --card-bg: rgba(255, 255, 255, 0.7);
@@ -13,7 +13,15 @@
             --text-secondary: #86868b;
             --accent-color: #0071e3;
             --accent-hover: #0077ed;
-            --border-color: #d2d2d7;
+            --border-color: rgba(210, 210, 215, 0.5);
+            
+            /* 任務卡片專用顏色 (類似您截圖的風格) */
+            --task-bg: #2d2d2f;
+            --task-text: #f5f5f7;
+            --task-text-muted: #98989d;
+            --task-border: #424245;
+            --tag-bg: rgba(255,255,255,0.1);
+            --error-color: #ff453a;
         }
 
         body {
@@ -26,118 +34,78 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
         }
 
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px; /* 加寬一點以容納網格 */
             padding: 0 20px;
             box-sizing: border-box;
         }
 
-        .card {
+        .main-card {
             background: var(--card-bg);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(30px);
+            -webkit-backdrop-filter: saturate(180%) blur(30px);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.5);
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        h1 { margin: 0; font-size: 24px; font-weight: 600; }
+        h1 { font-size: 24px; font-weight: 600; margin: 0 0 20px 0; }
         
-        .api-key-input {
-            width: 250px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 14px;
-        }
+        .input-group { margin-bottom: 16px; position: relative; }
 
-        .input-area {
-            position: relative;
-            margin-bottom: 16px;
-        }
-
-        textarea {
+        input[type="password"], textarea, select, input[type="number"] {
             width: 100%;
-            padding: 16px;
-            padding-right: 50px; /* 留空間給上傳按鈕 */
+            padding: 14px;
             border-radius: 12px;
-            border: 1px solid var(--border-color);
-            font-size: 16px;
+            border: 1px solid #d2d2d7;
+            font-size: 15px;
             font-family: inherit;
-            resize: vertical;
-            min-height: 100px;
             box-sizing: border-box;
             transition: border-color 0.2s;
         }
-        textarea:focus { outline: none; border-color: var(--accent-color); }
+        
+        textarea { resize: vertical; min-height: 100px; padding-right: 50px; }
+        textarea:focus, input:focus, select:focus { outline: none; border-color: var(--accent-color); }
 
-        /* 圖片上傳按鈕 (目前僅為 UI 預留) */
+        /* 🖼️ 真實運作的上傳按鈕 */
         .upload-btn {
             position: absolute;
-            bottom: 16px;
-            right: 16px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text-secondary);
-            transition: color 0.2s;
-        }
-        .upload-btn:hover { color: var(--accent-color); }
-
-        /* 進階設定工具列 */
-        .settings-bar {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .setting-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            flex: 1;
-            min-width: 100px;
-        }
-
-        .setting-group label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        select, input[type="number"] {
-            width: 100%;
-            padding: 8px 12px;
+            bottom: 14px;
+            right: 14px;
+            background: var(--bg-color);
+            border: 1px solid #d2d2d7;
             border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background-color: white;
-            font-size: 14px;
-            appearance: none;
+            padding: 6px;
             cursor: pointer;
-        }
-
-        .toggle-container {
+            color: var(--text-secondary);
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
+            justify-content: center;
+            transition: all 0.2s;
         }
+        .upload-btn:hover { color: var(--accent-color); border-color: var(--accent-color); }
+        
+        /* 檔案名稱預覽標籤 */
+        #fileNameDisplay {
+            position: absolute;
+            bottom: 18px;
+            right: 55px;
+            font-size: 12px;
+            color: var(--accent-color);
+            background: rgba(0, 113, 227, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .settings-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .setting-group { flex: 1; min-width: 120px; }
+        .setting-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; display: block; margin-bottom: 4px; }
 
         button.primary-btn {
             width: 100%;
@@ -149,58 +117,134 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
         }
-        button.primary-btn:hover { background-color: var(--accent-hover); }
-        button.primary-btn:disabled { background-color: var(--border-color); cursor: not-allowed; }
+        button.primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* 畫廊 (歷史紀錄) */
-        h2 { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
-        .gallery {
+        /* =========================================
+           專業網格任務卡片 (完美還原您的截圖)
+           ========================================= */
+        h2 { font-size: 20px; margin-bottom: 16px; }
+        
+        .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 16px;
         }
 
-        .gallery-item {
-            background: white;
+        .task-card {
+            background-color: var(--task-bg);
+            border: 1px solid var(--task-border);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid var(--border-color);
+            color: var(--task-text);
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 16 / 10;
             position: relative;
         }
 
-        .gallery-item img {
+        /* 狀態：成功顯示圖片 */
+        .task-card .image-wrapper {
             width: 100%;
-            aspect-ratio: 1/1;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 1;
+        }
+        .task-card img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            display: block;
         }
 
-        .gallery-item .meta {
-            padding: 12px;
-            font-size: 12px;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        /* 狀態：生成中 / 失敗 / 遮罩 */
+        .task-card .content-overlay {
+            padding: 16px;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+            background: var(--task-bg); /* 預設覆蓋整張卡 */
         }
+        
+        /* 當有圖片時，讓 overlay 變成半透明漸層墊在底部 */
+        .task-card.success .content-overlay {
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%);
+            justify-content: flex-end; /* 文字推到底部 */
+        }
+
+        .task-time { font-size: 12px; color: var(--task-text-muted); margin-bottom: 8px; font-family: monospace; }
+        
+        .task-prompt {
+            font-size: 13px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* 最多顯示3行 */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex-grow: 1;
+            margin-bottom: 12px;
+        }
+
+        .task-tags {
+            display: flex;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--task-text-muted);
+        }
+        .task-tag {
+            background: var(--tag-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* 中間狀態大圖示 (Spinner 或 錯誤) */
+        .center-status {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            z-index: 3;
+        }
+
+        /* 載入中的圈圈 */
+        .spinner {
+            width: 30px; height: 30px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .error-icon { color: var(--error-color); }
+        .status-text { font-size: 12px; color: var(--task-text-muted); }
+
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card">
-        <div class="header">
-            <h1>Playground</h1>
-            <input type="password" id="apiKeyInput" class="api-key-input" placeholder="輸入 API 金鑰 (sk-...)" autocomplete="off">
+    <div class="main-card">
+        <h1>GPT Image Playground</h1>
+        
+        <div class="input-group">
+            <input type="password" id="apiKeyInput" placeholder="輸入 API 金鑰 (sk-...)" autocomplete="off">
         </div>
 
-        <div class="input-area">
+        <div class="input-group">
             <textarea id="promptInput" placeholder="輸入高畫質影像的提示詞..."></textarea>
-            <button class="upload-btn" title="上傳參考圖 (開發中)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            
+            <input type="file" id="imageUploadInput" accept="image/png, image/jpeg, image/webp" style="display: none;">
+            
+            <span id="fileNameDisplay"></span>
+            <button class="upload-btn" id="triggerUploadBtn" title="上傳參考圖">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
             </button>
         </div>
 
@@ -209,8 +253,8 @@
                 <label>尺寸 (Size)</label>
                 <select id="sizeSelect">
                     <option value="auto">Auto</option>
-                    <option value="1024x1024">1:1 (1024x1024)</option>
-                    <option value="1024x1536">2:3 (1024x1536)</option>
+                    <option value="1024x1024">1:1</option>
+                    <option value="1024x1536">2:3</option>
                 </select>
             </div>
             <div class="setting-group">
@@ -221,83 +265,145 @@
                 </select>
             </div>
             <div class="setting-group">
-                <label>審核 (Moderation)</label>
-                <select id="modSelect">
-                    <option value="low">Low (寬鬆)</option>
-                    <option value="high">High (嚴格)</option>
-                </select>
-            </div>
-            <div class="setting-group">
                 <label>數量 (Count)</label>
                 <input type="number" id="countInput" value="1" min="1" max="4">
             </div>
         </div>
 
-        <div class="toggle-container">
-            <input type="checkbox" id="strictPrompt" checked>
-            <label for="strictPrompt">強制使用原提示詞 (不讓模型自動改寫)</label>
-        </div>
-
         <button id="generateBtn" class="primary-btn">生成圖片</button>
     </div>
 
-    <h2>生成紀錄</h2>
-    <div class="gallery" id="galleryContainer">
-        </div>
+    <h2>工作階段區</h2>
+    <div class="gallery-grid" id="galleryGrid"></div>
 </div>
 
 <script>
-    // DOM 元素
     const elements = {
         generateBtn: document.getElementById('generateBtn'),
         promptInput: document.getElementById('promptInput'),
         apiKeyInput: document.getElementById('apiKeyInput'),
         sizeSelect: document.getElementById('sizeSelect'),
         formatSelect: document.getElementById('formatSelect'),
-        modSelect: document.getElementById('modSelect'),
         countInput: document.getElementById('countInput'),
-        strictPrompt: document.getElementById('strictPrompt'),
-        galleryContainer: document.getElementById('galleryContainer')
+        galleryGrid: document.getElementById('galleryGrid'),
+        
+        // 上傳相關元素
+        fileInput: document.getElementById('imageUploadInput'),
+        triggerUploadBtn: document.getElementById('triggerUploadBtn'),
+        fileNameDisplay: document.getElementById('fileNameDisplay')
     };
 
-    // 載入歷史紀錄與設定
+    // 1. 真實的檔案上傳邏輯
+    elements.triggerUploadBtn.addEventListener('click', () => {
+        elements.fileInput.click(); // 點擊按鈕時，觸發隱藏的 input
+    });
+
+    elements.fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            elements.fileNameDisplay.textContent = file.name;
+            elements.fileNameDisplay.style.display = 'block';
+            // 溫馨提示：目前後端 API 尚未串接 Image to Image 功能，這只是前端 UI 準備好了。
+        }
+    });
+
+    // 2. 初始化載入歷史紀錄
+    let taskHistory = JSON.parse(localStorage.getItem('playground_history') || '[]');
+
+    function saveHistory() {
+        localStorage.setItem('playground_history', JSON.stringify(taskHistory));
+    }
+
+    // 獲取當前時間格式 (例如 02:05)
+    function getTimeString() {
+        const now = new Date();
+        return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // 3. 渲染單一張任務卡片的 HTML
+    function createCardHTML(task) {
+        let centerStatusHTML = '';
+        let overlayClass = '';
+        let imageHTML = '';
+
+        if (task.status === 'loading') {
+            centerStatusHTML = `<div class="center-status"><div class="spinner"></div><div class="status-text">生成中...</div></div>`;
+        } else if (task.status === 'failed') {
+            centerStatusHTML = `
+                <div class="center-status">
+                    <svg class="error-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <div class="status-text">失敗</div>
+                </div>`;
+        } else if (task.status === 'success') {
+            overlayClass = 'success';
+            imageHTML = `<div class="image-wrapper"><img src="${task.url}" alt="result"></div>`;
+        }
+
+        return `
+            ${imageHTML}
+            <div class="content-overlay">
+                <div class="task-time">🕒 ${task.time}</div>
+                <div class="task-prompt">${task.prompt}</div>
+                <div class="task-tags">
+                    <span class="task-tag">${task.size}</span>
+                    <span class="task-tag">${task.format}</span>
+                    <span class="task-tag">${task.n}</span>
+                </div>
+            </div>
+            ${centerStatusHTML}
+        `;
+    }
+
+    // 重新渲染整個網格
+    function renderGrid() {
+        elements.galleryGrid.innerHTML = '';
+        taskHistory.forEach(task => {
+            const card = document.createElement('div');
+            card.className = `task-card ${task.status === 'success' ? 'success' : ''}`;
+            card.id = `task-${task.id}`;
+            card.innerHTML = createCardHTML(task);
+            elements.galleryGrid.appendChild(card);
+        });
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
         const savedKey = localStorage.getItem('apple_image_api_key');
         if (savedKey) elements.apiKeyInput.value = savedKey;
-        renderGallery();
+        renderGrid();
     });
 
-    // 渲染畫廊
-    function renderGallery() {
-        const history = JSON.parse(localStorage.getItem('image_history') || '[]');
-        elements.galleryContainer.innerHTML = history.map(item => `
-            <div class="gallery-item">
-                <img src="${item.url}" alt="generated image">
-                <div class="meta" title="${item.prompt}">
-                    ${item.size} • ${item.format.toUpperCase()} <br>
-                    ${item.prompt}
-                </div>
-            </div>
-        `).join('');
-    }
-
+    // 4. 生成按鈕核心邏輯
     elements.generateBtn.addEventListener('click', async () => {
         const payload = {
             apiKey: elements.apiKeyInput.value.trim(),
             prompt: elements.promptInput.value.trim(),
             size: elements.sizeSelect.value,
             format: elements.formatSelect.value,
-            moderation: elements.modSelect.value,
             n: parseInt(elements.countInput.value) || 1,
-            strict: elements.strictPrompt.checked
+            strict: true
         };
 
         if (!payload.apiKey || !payload.prompt) return alert('請填寫金鑰與提示詞！');
         localStorage.setItem('apple_image_api_key', payload.apiKey);
 
-        // UI 狀態：載入中
+        // 建立一個新的「生成中」任務卡片，並加到最前面
+        const taskId = Date.now().toString();
+        const newTask = {
+            id: taskId,
+            status: 'loading',
+            time: getTimeString(),
+            prompt: payload.prompt,
+            size: payload.size,
+            format: payload.format,
+            n: payload.n
+        };
+        
+        taskHistory.unshift(newTask);
+        if(taskHistory.length > 20) taskHistory.pop(); // 最多保留 20 筆
+        renderGrid();
+
+        // UI 按鈕狀態
         elements.generateBtn.disabled = true;
-        elements.generateBtn.textContent = "✨ 生成中...";
 
         try {
             const response = await fetch('/api/generate', {
@@ -307,32 +413,38 @@
             });
 
             const data = await response.json();
+            const taskIndex = taskHistory.findIndex(t => t.id === taskId);
 
-            if (data.error) {
-                alert('發生錯誤：' + data.error);
-            } else if (data.images && data.images.length > 0) {
-                // 將新圖片存入歷史紀錄
-                const history = JSON.parse(localStorage.getItem('image_history') || '[]');
-                
-                // 處理可能回傳的多張圖片
-                data.images.forEach(imgUrl => {
-                    history.unshift({
-                        url: imgUrl,
-                        prompt: payload.prompt,
-                        size: payload.size,
-                        format: payload.format
-                    });
-                });
-
-                // 最多保留 20 筆紀錄
-                localStorage.setItem('image_history', JSON.stringify(history.slice(0, 20)));
-                renderGallery(); // 重新整理畫廊
+            if (data.error || !data.images) {
+                // 標記任務為失敗
+                taskHistory[taskIndex].status = 'failed';
+            } else {
+                // 如果只生成一張
+                if (data.images.length === 1) {
+                    taskHistory[taskIndex].status = 'success';
+                    taskHistory[taskIndex].url = data.images[0];
+                } else {
+                    // 如果生成多張，把原本那張改成第一張，然後為剩下的插入新卡片
+                    taskHistory[taskIndex].status = 'success';
+                    taskHistory[taskIndex].url = data.images[0];
+                    
+                    for (let i = 1; i < data.images.length; i++) {
+                        taskHistory.splice(taskIndex + i, 0, {
+                            ...newTask,
+                            id: taskId + '-' + i,
+                            status: 'success',
+                            url: data.images[i]
+                        });
+                    }
+                }
             }
         } catch (error) {
-            alert('連線失敗，請檢查網路或 Vercel 狀態。');
+            const taskIndex = taskHistory.findIndex(t => t.id === taskId);
+            taskHistory[taskIndex].status = 'failed';
         } finally {
             elements.generateBtn.disabled = false;
-            elements.generateBtn.textContent = "生成圖片";
+            saveHistory();
+            renderGrid();
         }
     });
 </script>
