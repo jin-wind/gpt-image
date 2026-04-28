@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 影像生成</title>
+    <style>
+        /* 蘋果風格設計系統 */
+        :root {
+            --bg-color: #f5f5f7;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent-color: #0071e3;
+            --accent-hover: #0077ed;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        input[type="password"], textarea {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #d2d2d7;
+            background-color: #ffffff;
+            font-size: 16px;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+            margin-bottom: 8px;
+        }
+        
+        textarea {
+            resize: none;
+            margin-bottom: 16px;
+        }
+
+        input[type="password"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 0;
+            margin-bottom: 16px;
+            padding-left: 4px;
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        button:hover { background-color: var(--accent-hover); }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #d2d2d7; cursor: not-allowed; }
+
+        .image-preview {
+            margin-top: 24px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            background-color: #e5e5ea;
+            aspect-ratio: 1 / 1;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>創造影像</h1>
+        <p class="subtitle">輸入您的靈感，交給 AI 實現。</p>
+
+        <input type="password" id="apiKeyInput" placeholder="輸入 API 金鑰 (sk-...)" autocomplete="off">
+        <p class="helper-text">金鑰僅安全儲存於您的瀏覽器中。</p>
+
+        <textarea id="promptInput" rows="3" placeholder="例如：一隻在太空中的可愛貓咪，高畫質..."></textarea>
+        <button id="generateBtn">生成圖片</button>
+
+        <div class="loader" id="loader">✨ 正在構思畫面，請稍候...</div>
+
+        <div class="image-preview" id="imageContainer">
+            <img id="resultImage" src="" alt="生成的圖片">
+        </div>
+    </div>
+</div>
+
+<script>
+    const generateBtn = document.getElementById('generateBtn');
+    const promptInput = document.getElementById('promptInput');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const loader = document.getElementById('loader');
+    const imageContainer = document.getElementById('imageContainer');
+    const resultImage = document.getElementById('resultImage');
+
+    // 網頁載入時，自動讀取之前存過的 API Key
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedKey = localStorage.getItem('apple_image_api_key');
+        if (savedKey) {
+            apiKeyInput.value = savedKey;
+        }
+    });
+
+    generateBtn.addEventListener('click', async () => {
+        const prompt = promptInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
+
+        if (!apiKey) return alert('請先輸入 API 金鑰！');
+        if (!prompt) return alert('請輸入提示詞！');
+
+        // 將 API Key 存入瀏覽器，下次不用重填
+        localStorage.setItem('apple_image_api_key', apiKey);
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = "生成中...";
+        loader.style.display = 'block';
+        imageContainer.style.display = 'none';
+        imageContainer.style.opacity = '0';
+
+        try {
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // 將 prompt 和 apiKey 一起傳給後端
+                body: JSON.stringify({ prompt: prompt, apiKey: apiKey })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert('發生錯誤：' + data.error);
+            } else if (data.image) {
+                resultImage.src = data.image;
+                imageContainer.style.display = 'block';
+                setTimeout(() => { imageContainer.style.opacity = '1'; }, 50);
+            }
+        } catch (error) {
+            alert('連線失敗，請稍後再試。');
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.textContent = "生成圖片";
+            loader.style.display = 'none';
+        }
+    });
+</script>
+
+</body>
+</html>
