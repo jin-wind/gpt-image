@@ -814,6 +814,14 @@
             elements.promptMeta.textContent = `${length} 字`;
         }
 
+        function formatErrorMessage(response, data) {
+            const detail = data.details || data.error || '';
+            if (response.status === 504 || response.status === 524 || detail.includes('524') || detail.toLowerCase().includes('timed out')) {
+                return '圖片生成逾時。請先改成 1 張、Medium 或 Low 品質，或縮短提示詞後重試。';
+            }
+            return detail || `伺服器回傳 ${response.status}`;
+        }
+
         function createCardHTML(task) {
             const isSuccess = task.status === 'success';
             const isFailed = task.status === 'failed';
@@ -974,13 +982,15 @@
                     body: JSON.stringify(payload)
                 });
 
-                const data = await response.json();
+                const data = await response.json().catch(() => ({
+                    error: `伺服器回傳 ${response.status}`
+                }));
                 const taskIndex = taskHistory.findIndex(task => task.id === taskId);
                 if (taskIndex === -1) return;
 
-                if (data.error || !data.images) {
+                if (!response.ok || data.error || !data.images) {
                     taskHistory[taskIndex].status = 'failed';
-                    taskHistory[taskIndex].error = data.error || '沒有收到圖片資料';
+                    taskHistory[taskIndex].error = formatErrorMessage(response, data);
                 } else {
                     taskHistory[taskIndex].status = 'success';
                     taskHistory[taskIndex].url = data.images[0];
