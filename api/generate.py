@@ -6,6 +6,12 @@ import urllib.error
 
 UPSTREAM_TIMEOUT_SECONDS = 85
 
+def parse_error_body(error_body):
+    try:
+        return json.loads(error_body)
+    except json.JSONDecodeError:
+        return None
+
 class handler(BaseHTTPRequestHandler):
     def _send_json(self, status_code, payload):
         self.send_response(status_code)
@@ -102,9 +108,15 @@ class handler(BaseHTTPRequestHandler):
         except urllib.error.HTTPError as e:
             error_body = e.read().decode('utf-8', errors='replace')
             if e.code == 524:
+                cloudflare_error = parse_error_body(error_body) or {}
+                retry_after = cloudflare_error.get('retry_after', 120)
+                ray_id = cloudflare_error.get('ray_id') or cloudflare_error.get('instance')
                 self._send_json(504, {
                     "error": "圖片生成逾時",
-                    "details": "上游服務回傳 524。請先用 1 張、Low 或 Medium 品質、較短提示詞重試；High 品質可能需要更久。"
+                    "details": f"上游服務回傳 524，建議等待 {retry_after} 秒後重試。請先用 1 張、Low 或 Medium 品質、較短提示詞重試；High 品質可能需要更久。",
+                    "retryAfter": retry_after,
+                    "rayId": ray_id,
+                    "upstreamStatus": 524
                 })
                 return
             self._send_json(e.code, {"error": f"上游 API 回傳 {e.code}", "details": error_body})
